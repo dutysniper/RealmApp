@@ -28,6 +28,7 @@ final class TaskListViewController: UITableViewController {
         
         taskLists = storageManager.realm.objects(TaskList.self)
         createTempData()
+        sortingList(UISegmentedControl())
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -45,11 +46,17 @@ final class TaskListViewController: UITableViewController {
         var content = cell.defaultContentConfiguration()
         let taskList = taskLists[indexPath.row]
         content.text = taskList.title
-        content.secondaryText = taskList.tasks.count.formatted()
+        content.secondaryText = taskList.tasks.map { $0.isComplete }.contains(false)
+        || taskList.tasks.count == 0
+        ? taskList.tasks.where { $0.isComplete == false }.count.formatted()
+        : "✅"
+        
         cell.contentConfiguration = content
         return cell
     }
-    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let taskList = taskLists[indexPath.row]
@@ -87,6 +94,12 @@ final class TaskListViewController: UITableViewController {
     }
 
     @IBAction func sortingList(_ sender: UISegmentedControl) {
+        switch sender.selectedSegmentIndex {
+        case 0: taskLists = taskLists.sorted(byKeyPath: "date", ascending: false)
+            tableView.reloadData()
+        default: taskLists = taskLists.sorted(byKeyPath: "title", ascending: true)
+            tableView.reloadData()
+        }
     }
     
     @objc private func addButtonPressed() {
